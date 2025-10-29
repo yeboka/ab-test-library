@@ -5,8 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @yeboka/ab-testing-library"
+    "build": "npm run build -w ab-testing-library"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

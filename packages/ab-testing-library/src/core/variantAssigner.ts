@@ -1,15 +1,15 @@
-import { hashToNumber } from '../utils/hash'
+import { hashToBucketWithSalt } from '../utils/hash'
+import { getNormalizedSplitsCached } from './experiments/splitUtils'
+import { getHashingConfig } from './config'
 
 export const variantAssigner = {
   getVariant(userId: string, experimentKey: string, splits: Record<string, number>): string {
-    const hash = hashToNumber(`${userId}:${experimentKey}`)
-    const random = (hash % 10000) / 10000
-    let cumulative = 0
-
-    for (const [variant, percent] of Object.entries(splits)) {
-      cumulative += percent
-      if (random < cumulative) return variant
+    const buckets = getNormalizedSplitsCached(experimentKey, splits)
+    const cfg = getHashingConfig()
+    const r = hashToBucketWithSalt(userId, experimentKey, { salt: cfg.salt, version: cfg.version })
+    for (const b of buckets) {
+      if (r < b.cumulative) return b.key
     }
-    return Object.keys(splits)[Object.keys(splits).length - 1]!
+    return buckets[buckets.length - 1]!.key
   }
 }

@@ -26,10 +26,6 @@ export const experimentRegistry = {
     return exp
   },
 
-  refresh(payload: ExperimentMap) {
-    experiments = payload
-  },
-
   clear() {
     experiments = {}
   }

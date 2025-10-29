@@ -9,7 +9,7 @@ export const remoteStorage = {
   async getUser(user_id: string) {
     const { data, error } = await supabase.from('users').select('*').eq('id', user_id).maybeSingle()
     if (error) {
-      console.error(error)
+      // console.error(error)
       return null
     }
     return data
@@ -33,7 +33,7 @@ export const remoteStorage = {
       .select('variant')
       .eq('user_id', userId)
       .eq('experiment_key', experimentKey)
-      .single()
+      .maybeSingle()
 
     if (error) throw error
     console.log('DATA', data)
