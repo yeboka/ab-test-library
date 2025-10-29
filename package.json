@@ -1,0 +1,12 @@
+{
+  "name": "ab-testing-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @yeboka/ab-testing-library"
+  },
+  "dependencies": {
+  }
+}
