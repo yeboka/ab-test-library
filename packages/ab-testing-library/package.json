@@ -20,9 +20,6 @@
     "clean": "rm -rf dist",
     "test": "jest"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.76.1"
-  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.9.0",

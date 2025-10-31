@@ -1,12 +1,10 @@
 import { storage } from './core/storage/storage'
 import { variantAssigner } from './core/variantAssigner'
 import { experimentRegistry } from './core/experiments/experimentRegistry'
-import { subscribeToExperimentUpdates, startExperimentPolling } from './api/supabase/realtimeListener'
+import { setRemoteStorageAdapter, IRemoteStorageAdapter } from './core/adapters/remoteStorageAdapter'
+import { setHashingConfig } from './core/config'
 
-type UnsubscribeFunc = () => void
-
-export const initializeUser = async (userData: { id: string; email: string }): Promise<UnsubscribeFunc> => {
-  await experimentRegistry.init()
+export const initializeUser = async (userData: { id: string; email: string }) => {
   await storage.saveUser(userData)
   await Promise.all(
     experimentRegistry.list().map(async exp => {
@@ -16,29 +14,6 @@ export const initializeUser = async (userData: { id: string; email: string }): P
       await storage.saveVariant(exp.key, variant)
     })
   )
-
-  // Start realtime updates and polling fallback
-  let stopRealtime: (() => void) | null = null
-  try {
-    stopRealtime = subscribeToExperimentUpdates()
-  } catch (err) {
-    console.error('Failed to start realtime updates: ', err)
-  }
-  // let stopPolling: (() => void) | null = null
-  // try {
-  //   stopPolling = startExperimentPolling(60000)
-  // } catch (err) {
-  //   console.error('Failed to start polling updates: ', err)
-  // }
-
-  return () => {
-    try {
-      stopRealtime && stopRealtime()
-    } catch {}
-    // try {
-    //   stopPolling && stopPolling()
-    // } catch {}
-  }
 }
 
 export const updateUser = async (userData: { id: string; email: string }, options?: { reassignVariant?: boolean }) => {
@@ -76,3 +51,14 @@ export const rehydrate = () => {
     return { user, variants: {} as Record<string, string> }
   }
 }
+
+export function initializeLibrary(options: {
+  adapter: IRemoteStorageAdapter
+  hashing?: { salt?: string; version?: number }
+}) {
+  experimentRegistry.init()
+  setRemoteStorageAdapter(options.adapter)
+  if (options.hashing) setHashingConfig(options.hashing)
+}
+
+export { createSupabaseAdapter } from './core/adapters/supabaseAdapter'

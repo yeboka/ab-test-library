@@ -1,42 +1,24 @@
 import { log } from 'console'
-import { supabase } from '../../api/supabase/supabaseClient'
+import { getRemoteStorageAdapter } from '../adapters/remoteStorageAdapter'
 
 export const remoteStorage = {
   async saveUser(user: { id: string; email: string }) {
-    await supabase.from('users').upsert(user, { onConflict: 'id' })
+    await getRemoteStorageAdapter().saveUser(user)
   },
 
   async getUser(user_id: string) {
-    const { data, error } = await supabase.from('users').select('*').eq('id', user_id).maybeSingle()
-    if (error) {
-      // console.error(error)
-      return null
-    }
-    return data
+    return await getRemoteStorageAdapter().getUser(user_id)
   },
 
   async getExperiments() {
-    const { data, error } = await supabase.from('experiments').select('*')
-    if (error) throw error
-    return data
+    return await getRemoteStorageAdapter().getExperiments()
   },
 
   async saveVariant(userId: string, experimentKey: string, variant: string) {
-    await supabase
-      .from('user_variants')
-      .upsert({ user_id: userId, experiment_key: experimentKey, variant }, { onConflict: 'user_id,experiment_key' })
+    await getRemoteStorageAdapter().saveVariant(userId, experimentKey, variant)
   },
 
   async getVariant(userId: string, experimentKey: string) {
-    const { data, error } = await supabase
-      .from('user_variants')
-      .select('variant')
-      .eq('user_id', userId)
-      .eq('experiment_key', experimentKey)
-      .maybeSingle()
-
-    if (error) throw error
-    console.log('DATA', data)
-    return data
+    return await getRemoteStorageAdapter().getVariant(userId, experimentKey)
   }
 }

@@ -20,6 +20,7 @@ export const storage = {
       if (!remoteUser) {
         await remoteStorage.saveUser(user)
         window.localStorage.setItem('ab_user', JSON.stringify(user))
+        window.localStorage.removeItem('ab_variants')
       } else {
         window.localStorage.setItem('ab_user', JSON.stringify(remoteUser))
       }

@@ -1,11 +1,11 @@
-import { remoteStorage } from '../storage/remoteStorage'
+import { getRemoteStorageAdapter } from '../adapters/remoteStorageAdapter'
 import { Experiment, ExperimentMap } from './experimentTypes'
 
 let experiments: ExperimentMap = {}
 
 export const experimentRegistry = {
   async init() {
-    const data = await remoteStorage.getExperiments()
+    const data = await getRemoteStorageAdapter().getExperiments()
     experiments = {}
     for (const exp of data) {
       experiments[exp.key] = exp
