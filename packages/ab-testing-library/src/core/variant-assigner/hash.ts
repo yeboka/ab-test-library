@@ -9,13 +9,13 @@ export function hashToBucket(input: string): number {
 }
 
 export function hashToBucketWithSalt(
-  userId: string,
+  user: { email: string; id: string },
   experimentKey: string,
   opts?: { salt?: string; version?: number }
 ): number {
   const salt = opts?.salt ?? 'ablib'
   const version = opts?.version ?? 1
-  return hashToBucket(`${salt}:${version}:${userId}:${experimentKey}`)
+  return hashToBucket(`${salt}:${version}:${user.id}${user.email}:${experimentKey}`)
 }
 
 // Backwards-compatible helper returning a positive integer (deprecated)

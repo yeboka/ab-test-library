@@ -5,11 +5,9 @@ export interface Experiment {
   enabled?: boolean // If false, experiment is disabled and should always return control variant
 }
 
-export type ExperimentMap = Record<string, Experiment>
-
 export type UserVariant = {
   user_id: string
   experiment_key: string
   variant: string
-  updated_at: string | Date
+  updated_at?: string | Date
 }

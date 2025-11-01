@@ -1,5 +1,5 @@
 import { User } from '@supabase/supabase-js'
-import { Experiment, UserVariant } from '../experiments/experimentTypes'
+import { Experiment, UserVariant } from '../types'
 
 export interface IRemoteStorageAdapter {
   getUser(userId: string): Promise<{ id: string; email?: string } | null>

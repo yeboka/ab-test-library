@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { IRemoteStorageAdapter } from './remoteStorageAdapter'
-import { Experiment, UserVariant } from '../experiments/experimentTypes'
+import { Experiment, UserVariant } from '../types'
 
 export function createSupabaseAdapter(client: SupabaseClient): IRemoteStorageAdapter {
   return {
