@@ -54,7 +54,6 @@ export function createSupabaseAdapter(client: SupabaseClient): IRemoteStorageAda
         .on('postgres_changes', { event: '*', schema: 'public', table: 'experiments' }, async () => {
           try {
             const { data } = await client.from('experiments').select('*')
-            console.log('experiments updated', data)
             onChange((data || []) as Experiment[])
           } catch (err) {
             console.error('Supabase subscribeExperiments refresh failed: ', err)
@@ -74,7 +73,6 @@ export function createSupabaseAdapter(client: SupabaseClient): IRemoteStorageAda
       return () => {
         try {
           channel.unsubscribe()
-          console.log('Unsubscribed from experiment updates')
         } catch (err) {
           console.error('Failed to unsubscribe experiments channel: ', err)
         }

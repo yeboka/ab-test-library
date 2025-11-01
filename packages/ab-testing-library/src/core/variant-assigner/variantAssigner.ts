@@ -1,5 +1,5 @@
-import { hashToBucketWithSalt } from '../utils/hash'
-import { getNormalizedSplitsCached } from './experiments/splitUtils'
+import { hashToBucketWithSalt } from './hash'
+import { getNormalizedSplitsCached } from '../experiments/splitUtils'
 import { getHashingConfig } from './config'
 
 export const variantAssigner = {

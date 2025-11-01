@@ -37,11 +37,9 @@ export const storage = {
   async getVariants(userId: string) {
     if (!isBrowser) return await remoteStorage.getVariants(userId)
     const variants = JSON.parse(window.localStorage.getItem('ab_variants') || '[]') as UserVariant[]
-    console.log('variants from local storage', variants)
     if (variants.length > 0) return variants
     else {
       const vs = await remoteStorage.getVariants(userId)
-      console.log('variants from remote storage', vs)
       return vs
     }
   },

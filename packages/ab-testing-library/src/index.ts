@@ -1,9 +1,9 @@
 import { storage } from './core/storage/storage'
-import { variantAssigner } from './core/variantAssigner'
+import { variantAssigner } from './core/variant-assigner/variantAssigner'
 import { experimentRegistry } from './core/experiments/experimentRegistry'
 import { setRemoteStorageAdapter, IRemoteStorageAdapter } from './core/adapters/remoteStorageAdapter'
-import { setHashingConfig } from './core/config'
-import { subscribeToExperimentUpdates } from './api/supabase/realtimeListener'
+import { setHashingConfig } from './core/variant-assigner/config'
+import { subscribeToExperimentUpdates } from './core/storage/realtimeListener'
 
 export async function initializeExperiments(userId: string) {}
 
@@ -11,25 +11,21 @@ export const initializeUser = async (userData: { id: string; email: string }) =>
   await storage.saveUser(userData)
   const experiments = await storage.getExperiments()
   const variants = await storage.getVariants(userData.id)
-  console.log('variants', variants)
-  console.log('experiments', experiments)
   if (variants === null || experiments === null) return
-
   if (variants.length < experiments.length) {
-    console.log('assigning variants')
     for (const exp of experiments) {
       const variant = variants.find(v => exp.key === v.experiment_key)
       if (variant) continue
-      console.log('not found in ls for ', exp.key)
-      const remoteVariant = await storage.getVariant(userData.id, exp.key)
+      let remoteVariant = await storage.getVariant(userData.id, exp.key)
       if (remoteVariant && remoteVariant !== null) {
         variants.push(remoteVariant)
         continue
       }
       const newVariant = variantAssigner.getVariant(userData.id, exp.key, exp.splits)
-      const savedVariant = await storage.saveVariant(userData.id, exp.key, newVariant)
-      if (savedVariant && savedVariant !== null) {
-        variants.push(savedVariant)
+      await storage.saveVariant(userData.id, exp.key, newVariant)
+      remoteVariant = await storage.getVariant(userData.id, exp.key)
+      if (remoteVariant && remoteVariant !== null) {
+        variants.push(remoteVariant)
       }
     }
   }

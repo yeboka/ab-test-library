@@ -1,10 +1,10 @@
-import { experimentRegistry } from '../../core/experiments/experimentRegistry'
-import { Experiment } from '../../core/experiments/experimentTypes'
-import { getRemoteStorageAdapter } from '../../core/adapters/remoteStorageAdapter'
-import { clearNormalizedSplitsCache } from '../../core/experiments/splitUtils'
+import { experimentRegistry } from '../experiments/experimentRegistry'
+import { Experiment } from '../experiments/experimentTypes'
+import { getRemoteStorageAdapter } from '../adapters/remoteStorageAdapter'
+import { clearNormalizedSplitsCache } from '../experiments/splitUtils'
 import { initializeExperiments } from '../..'
-import { storage } from '../../core/storage/storage'
-import { variantAssigner } from '../../core/variantAssigner'
+import { storage } from './storage'
+import { variantAssigner } from '../variant-assigner/variantAssigner'
 
 export function subscribeToExperimentUpdates() {
   const adapter = getRemoteStorageAdapter()
@@ -14,7 +14,6 @@ export function subscribeToExperimentUpdates() {
   }
   const unsubscribe = adapter.subscribeExperiments(async experiments => {
     const user = storage.getUser()
-    console.log('user', user)
     if (!user) return
     const variants = await storage.getVariants(user.id)
     if (variants === null || experiments === null) return
@@ -22,9 +21,7 @@ export function subscribeToExperimentUpdates() {
       for (const exp of experiments) {
         const variant = variants.find(v => exp.key === v.experiment_key)
         if (variant) continue
-        console.log('not found in ls for ', exp.key)
         let remoteVariant = await storage.getVariant(user.id, exp.key)
-        console.log('remoteVariant', remoteVariant)
         if (remoteVariant && remoteVariant !== null) {
           variants.push(remoteVariant)
           continue
@@ -32,7 +29,6 @@ export function subscribeToExperimentUpdates() {
         const newVariant = variantAssigner.getVariant(user.id, exp.key, exp.splits)
         await storage.saveVariant(user.id, exp.key, newVariant)
         remoteVariant = await storage.getVariant(user.id, exp.key)
-        console.log('savedVariant', remoteVariant)
         if (remoteVariant && remoteVariant !== null) {
           variants.push(remoteVariant)
         }
