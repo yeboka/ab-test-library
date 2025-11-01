@@ -17,6 +17,10 @@ export const experimentRegistry = {
   },
 
   list(): Experiment[] {
+    const isBrowser = typeof window !== 'undefined'
+    if (isBrowser) {
+      console.log('[AB Testing] Experiments list:', Object.values(experiments), experiments)
+    }
     return Object.values(experiments)
   },
 

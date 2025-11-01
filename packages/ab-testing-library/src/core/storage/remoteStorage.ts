@@ -1,4 +1,3 @@
-import { log } from 'console'
 import { getRemoteStorageAdapter } from '../adapters/remoteStorageAdapter'
 
 export const remoteStorage = {
@@ -14,8 +13,12 @@ export const remoteStorage = {
     return await getRemoteStorageAdapter().getExperiments()
   },
 
+  async getVariants(userId: string) {
+    return await getRemoteStorageAdapter().getVariants(userId)
+  },
+
   async saveVariant(userId: string, experimentKey: string, variant: string) {
-    await getRemoteStorageAdapter().saveVariant(userId, experimentKey, variant)
+    return await getRemoteStorageAdapter().saveVariant(userId, experimentKey, variant)
   },
 
   async getVariant(userId: string, experimentKey: string) {

@@ -14,6 +14,9 @@
   "files": [
     "dist"
   ],
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "dev": "tsup src/index.ts --watch",

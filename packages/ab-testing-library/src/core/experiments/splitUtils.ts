@@ -34,3 +34,7 @@ export function getNormalizedSplitsCached(experimentKey: string, splits: Record<
   cache.set(signature, normalized)
   return normalized
 }
+
+export function clearNormalizedSplitsCache() {
+  cache.clear()
+}

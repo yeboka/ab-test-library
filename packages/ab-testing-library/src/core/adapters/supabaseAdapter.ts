@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { IRemoteStorageAdapter } from './remoteStorageAdapter'
-import { Experiment } from '../experiments/experimentTypes'
+import { Experiment, UserVariant } from '../experiments/experimentTypes'
 
 export function createSupabaseAdapter(client: SupabaseClient): IRemoteStorageAdapter {
   return {
@@ -14,13 +14,21 @@ export function createSupabaseAdapter(client: SupabaseClient): IRemoteStorageAda
     },
 
     async saveUser(user: { id: string; email?: string }) {
-      await client.from('users').upsert(user, { onConflict: 'id' })
+      const { data, error } = await client.from('users').upsert(user, { onConflict: 'id' })
+      if (error) throw error
+      return data as UserVariant | null
     },
 
     async getExperiments() {
-      const { data, error } = await client.from('experiments').select('*')
+      const { data, error } = await client.from('experiments').select('*').eq('enabled', true)
       if (error) throw error
       return (data || []) as Experiment[]
+    },
+
+    async getVariants(userId: string) {
+      const { data, error } = await client.from('user_variants').select('*').eq('user_id', userId)
+      if (error) return null
+      return data as UserVariant[]
     },
 
     async saveVariant(userId: string, experimentKey: string, variant: string) {
@@ -32,29 +40,41 @@ export function createSupabaseAdapter(client: SupabaseClient): IRemoteStorageAda
     async getVariant(userId: string, experimentKey: string) {
       const { data, error } = await client
         .from('user_variants')
-        .select('variant')
+        .select('*')
         .eq('user_id', userId)
         .eq('experiment_key', experimentKey)
         .maybeSingle()
       if (error) return null
-      return data as any
+      return data as UserVariant | null
     },
 
     subscribeExperiments(onChange) {
       const channel = client
-        .channel('experiments')
+        .channel('experiments_channel')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'experiments' }, async () => {
           try {
             const { data } = await client.from('experiments').select('*')
+            console.log('experiments updated', data)
             onChange((data || []) as Experiment[])
           } catch (err) {
             console.error('Supabase subscribeExperiments refresh failed: ', err)
           }
         })
-        .subscribe()
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Subscribed to experiment updates')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Channel subscription error')
+          } else if (status === 'TIMED_OUT') {
+            console.warn('Channel subscription timed out')
+          } else if (status === 'CLOSED') {
+            console.warn('Channel subscription closed')
+          }
+        })
       return () => {
         try {
           channel.unsubscribe()
+          console.log('Unsubscribed from experiment updates')
         } catch (err) {
           console.error('Failed to unsubscribe experiments channel: ', err)
         }

@@ -1,13 +1,15 @@
-import { Experiment } from '../experiments/experimentTypes'
+import { User } from '@supabase/supabase-js'
+import { Experiment, UserVariant } from '../experiments/experimentTypes'
 
 export interface IRemoteStorageAdapter {
   getUser(userId: string): Promise<{ id: string; email?: string } | null>
-  saveUser(user: { id: string; email?: string }): Promise<void>
+  saveUser(user: { id: string; email?: string }): Promise<UserVariant | null>
 
   getExperiments(): Promise<Experiment[]>
 
+  getVariants(userId: string): Promise<UserVariant[] | null>
   saveVariant(userId: string, experimentKey: string, variant: string): Promise<void>
-  getVariant(userId: string, experimentKey: string): Promise<{ variant?: string } | null>
+  getVariant(userId: string, experimentKey: string): Promise<UserVariant | null>
 
   subscribeExperiments?: (onChange: (experiments: Experiment[]) => void) => () => void
 }
@@ -19,7 +21,6 @@ export function setRemoteStorageAdapter(adapter: IRemoteStorageAdapter) {
 }
 
 export function getRemoteStorageAdapter(): IRemoteStorageAdapter {
-  console.log('REMOTE ADAPTER')
   if (!currentAdapter) {
     throw new Error('RemoteStorageAdapter not initialized. Call initializeLibrary with an adapter.')
   }

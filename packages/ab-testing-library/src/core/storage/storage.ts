@@ -1,3 +1,4 @@
+import { UserVariant } from '../experiments/experimentTypes'
 import { remoteStorage } from './remoteStorage'
 
 const isBrowser = typeof window !== 'undefined'
@@ -29,24 +30,37 @@ export const storage = {
     }
   },
 
-  async getVariant(user_id: string, experimentKey: string) {
-    if (!isBrowser) return null
+  async getExperiments() {
+    return await remoteStorage.getExperiments()
+  },
 
-    let variants: Record<string, string> = {}
-    try {
-      variants = JSON.parse(window.localStorage.getItem('ab_variants') || '{}')
-    } catch {
-      variants = {}
+  async getVariants(userId: string) {
+    if (!isBrowser) return await remoteStorage.getVariants(userId)
+    const variants = JSON.parse(window.localStorage.getItem('ab_variants') || '[]') as UserVariant[]
+    console.log('variants from local storage', variants)
+    if (variants.length > 0) return variants
+    else {
+      const vs = await remoteStorage.getVariants(userId)
+      console.log('variants from remote storage', vs)
+      return vs
     }
-    let variant = variants[experimentKey]
+  },
+
+  async getVariant(user_id: string, experimentKey: string) {
+    let variants: UserVariant[]
+    try {
+      variants = JSON.parse(window.localStorage.getItem('ab_variants') || '[]') as UserVariant[]
+    } catch {
+      variants = []
+    }
+    let variant = variants.find(v => v.experiment_key === experimentKey)
     if (variant) {
       return variant
     } else {
       try {
-        const data = await remoteStorage.getVariant(user_id, experimentKey)
-        const remoteVariant = (data && (data as any).variant) as string | undefined
-        if (!remoteVariant) return null
-        variants[experimentKey] = remoteVariant
+        const remoteVariant = await remoteStorage.getVariant(user_id, experimentKey)
+        if (!remoteVariant || remoteVariant === null) return null
+        variants.push(remoteVariant)
         window.localStorage.setItem('ab_variants', JSON.stringify(variants))
         return remoteVariant
       } catch (err) {
@@ -56,17 +70,14 @@ export const storage = {
     }
   },
 
-  async saveVariant(experimentKey: string, variant: string) {
+  async saveVariant(userId: string, experimentKey: string, variant: string) {
     if (!isBrowser) return
 
     try {
-      const user = JSON.parse(window.localStorage.getItem('ab_user') || '{}')
-      await remoteStorage.saveVariant(user.id, experimentKey, variant)
-      const variants = JSON.parse(window.localStorage.getItem('ab_variants') || '{}')
-      variants[experimentKey] = variant
-      window.localStorage.setItem('ab_variants', JSON.stringify(variants))
+      return await remoteStorage.saveVariant(userId, experimentKey, variant)
     } catch (err) {
       console.error('Error occured while saving variant with error: ', err)
+      return null
     }
   }
 }

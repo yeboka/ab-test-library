@@ -8,6 +8,6 @@
     "build": "npm run build -w ab-testing-library"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.77.0"
+    "@supabase/supabase-js": "^2.78.0"
   }
 }
