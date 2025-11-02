@@ -1,5 +1,5 @@
-import { User } from '@supabase/supabase-js'
 import { Experiment, UserVariant } from '../types'
+import { AdapterNotInitializedError } from '../errors'
 
 export interface IRemoteStorageAdapter {
   getUser(userId: string): Promise<{ id: string; email?: string } | null>
@@ -22,7 +22,7 @@ export function setRemoteStorageAdapter(adapter: IRemoteStorageAdapter) {
 
 export function getRemoteStorageAdapter(): IRemoteStorageAdapter {
   if (!currentAdapter) {
-    throw new Error('RemoteStorageAdapter not initialized. Call initializeLibrary with an adapter.')
+    throw new AdapterNotInitializedError()
   }
   return currentAdapter
 }

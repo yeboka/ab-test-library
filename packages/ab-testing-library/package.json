@@ -21,14 +21,14 @@
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "dev": "tsup src/index.ts --watch",
     "clean": "rm -rf dist",
-    "test": "jest"
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
     "@types/node": "^22.9.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.3",
+    "jsdom": "^27.1.0",
     "tsup": "^8.2.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.0.0"
   }
 }

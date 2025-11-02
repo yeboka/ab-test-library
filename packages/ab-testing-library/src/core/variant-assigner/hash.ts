@@ -18,7 +18,6 @@ export function hashToBucketWithSalt(
   return hashToBucket(`${salt}:${version}:${user.id}${user.email}:${experimentKey}`)
 }
 
-// Backwards-compatible helper returning a positive integer (deprecated)
 export function hashToNumber(str: string) {
   return Math.floor(hashToBucket(str) * Number.MAX_SAFE_INTEGER)
 }
