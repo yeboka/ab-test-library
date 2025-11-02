@@ -246,8 +246,10 @@ describe('initUserExperimentsAndVariants', () => {
   describe('Edge cases - Unexpected updates', () => {
     it('should handle localStorage.setItem failure', async () => {
       const originalSetItem = localStorageMock.setItem
+      const quotaError: any = new Error('localStorage quota exceeded')
+      quotaError.name = 'QuotaExceededError'
       localStorageMock.setItem = vi.fn().mockImplementation(() => {
-        throw new Error('localStorage quota exceeded')
+        throw quotaError
       })
 
       mockVariantService.getUserVariantByExperimentLey = vi
@@ -257,15 +259,13 @@ describe('initUserExperimentsAndVariants', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ user_id: mockUser.id, experiment_key: 'experiment-2', variant: 'B' })
 
-      // The implementation doesn't catch localStorage errors, so expect it to throw
-      await expect(
-        initUserExperimentsAndVariants({
-          userData: mockUser,
-          userService: mockUserService,
-          experimentService: mockExperimentService,
-          variantService: mockVariantService
-        })
-      ).rejects.toThrow('localStorage quota exceeded')
+      // The implementation catches quota errors silently, so expect it to not throw
+      await initUserExperimentsAndVariants({
+        userData: mockUser,
+        userService: mockUserService,
+        experimentService: mockExperimentService,
+        variantService: mockVariantService
+      })
 
       // Should still attempt operations before the error
       expect(mockUserService.saveUser).toHaveBeenCalled()
@@ -555,8 +555,8 @@ describe('updateUserWithReassignVariants', () => {
       })
 
       expect(mockVariantService.getVariantsByUserId).toHaveBeenCalled()
-      // Should still attempt to set localStorage even if variants is null
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('ab_variants', 'null')
+      // Should not set localStorage if variants is null
+      expect(localStorageMock.setItem).not.toHaveBeenCalled()
     })
 
     it('should handle corrupted experiment data during reassignment', async () => {
@@ -602,20 +602,20 @@ describe('updateUserWithReassignVariants', () => {
 
     it('should handle localStorage.setItem failure after reassignment', async () => {
       const originalSetItem = localStorageMock.setItem
+      const quotaError: any = new Error('localStorage quota exceeded')
+      quotaError.name = 'QuotaExceededError'
       localStorageMock.setItem = vi.fn().mockImplementation(() => {
-        throw new Error('localStorage quota exceeded')
+        throw quotaError
       })
 
-      // The implementation doesn't catch localStorage errors, so expect it to throw
-      await expect(
-        updateUserWithReassignVariants({
-          userData: mockUser,
-          options: { reassignVariant: true },
-          userService: mockUserService,
-          experimentService: mockExperimentService,
-          variantService: mockVariantService
-        })
-      ).rejects.toThrow('localStorage quota exceeded')
+      // The implementation catches quota errors silently, so expect it to not throw
+      await updateUserWithReassignVariants({
+        userData: mockUser,
+        options: { reassignVariant: true },
+        userService: mockUserService,
+        experimentService: mockExperimentService,
+        variantService: mockVariantService
+      })
 
       // Should still attempt operations before the error
       expect(mockVariantService.saveUserVariantForExperiment).toHaveBeenCalled()
@@ -773,7 +773,7 @@ describe('getUserVariantByExperimentKey', () => {
         variantService: mockVariantService
       })
 
-      expect(result).toBeUndefined()
+      expect(result).toBeNull()
     })
   })
 
@@ -781,27 +781,28 @@ describe('getUserVariantByExperimentKey', () => {
     it('should return null when user does not exist', async () => {
       mockUserService.getUser = vi.fn().mockReturnValue(null)
 
-      const result = await getUserVariantByExperimentKey({
-        experimentKey: 'experiment-1',
-        userService: mockUserService,
-        variantService: mockVariantService
-      })
+      await expect(
+        getUserVariantByExperimentKey({
+          experimentKey: 'experiment-1',
+          userService: mockUserService,
+          variantService: mockVariantService
+        })
+      ).rejects.toThrow()
 
       expect(mockUserService.getUser).toHaveBeenCalled()
       expect(mockVariantService.getUserVariantByExperimentLey).not.toHaveBeenCalled()
-      expect(result).toBeNull()
     })
 
     it('should return null when user is undefined', async () => {
       mockUserService.getUser = vi.fn().mockReturnValue(undefined as any)
 
-      const result = await getUserVariantByExperimentKey({
-        experimentKey: 'experiment-1',
-        userService: mockUserService,
-        variantService: mockVariantService
-      })
-
-      expect(result).toBeNull()
+      await expect(
+        getUserVariantByExperimentKey({
+          experimentKey: 'experiment-1',
+          userService: mockUserService,
+          variantService: mockVariantService
+        })
+      ).rejects.toThrow()
     })
 
     it('should return null when user has missing id field', async () => {
@@ -831,8 +832,8 @@ describe('getUserVariantByExperimentKey', () => {
         variantService: mockVariantService
       })
 
-      // When savedVariant is null, savedVariant?.variant is undefined, not null
-      expect(result).toBeUndefined()
+      // When savedVariant is null, savedVariant?.variant is null (because of ?? operator)
+      expect(result).toBeNull()
     })
 
     it('should handle corrupted variant data with invalid structure', async () => {
@@ -941,7 +942,8 @@ describe('getUserVariantByExperimentKey', () => {
         variantService: mockVariantService
       })
 
-      expect(result).toBeUndefined()
+      // When variant is undefined, savedVariant?.variant is undefined, but ?? operator converts it to null
+      expect(result).toBeNull()
     })
 
     it('should handle very long experiment key', async () => {

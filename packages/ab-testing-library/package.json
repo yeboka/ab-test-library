@@ -1,19 +1,43 @@
 {
   "name": "ab-testing-library",
   "version": "0.1.0",
+  "description": "A lightweight, production-ready library for managing A/B tests with deterministic variant assignment, real-time experiment updates, and remote configuration support.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
+  "keywords": [
+    "ab-testing",
+    "a-b-testing",
+    "experiments",
+    "variant-assignment",
+    "supabase",
+    "analytics",
+    "testing",
+    "feature-flags"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yeboka/ab-test-library.git",
+    "directory": "packages/ab-testing-library"
+  },
+  "bugs": {
+    "url": "https://github.com/yeboka/ab-test-library/issues"
+  },
+  "homepage": "https://github.com/yeboka/ab-test-library#readme",
   "peerDependencies": {
     "@supabase/supabase-js": "^2.0.0"
   },
@@ -22,7 +46,8 @@
     "dev": "tsup src/index.ts --watch",
     "clean": "rm -rf dist",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build && npm run test:run"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

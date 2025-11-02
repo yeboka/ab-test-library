@@ -1,0 +1,16 @@
+src/
+node_modules/
+*.test.ts
+*.test.tsx
+vitest.config.ts
+tsconfig.json
+tsconfig.node.json
+.env
+.env.local
+.DS_Store
+*.log
+.vscode/
+.idea/
+dist/tsconfig.tsbuildinfo
+example/
+
