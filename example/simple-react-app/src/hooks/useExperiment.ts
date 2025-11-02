@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getVariant } from 'ab-testing-library'
 import { useExperimentContext } from '../contexts/ExperimentContext'
+import { useUserStore } from '../stores/userStore'
 
 interface UseExperimentResult {
   variant: string | null
@@ -13,6 +14,7 @@ export const useExperiment = (experimentKey: string): UseExperimentResult => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
   const { error: initError } = useExperimentContext()
+  const { userEmail } = useUserStore()
 
   useEffect(() => {
     const fetchVariant = async () => {
@@ -32,7 +34,7 @@ export const useExperiment = (experimentKey: string): UseExperimentResult => {
     }
 
     fetchVariant()
-  }, [experimentKey])
+  }, [experimentKey, userEmail])
 
   return { variant, loading: loading, error: initError || error }
 }

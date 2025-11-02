@@ -4,16 +4,25 @@ import { User, Mail, Dices } from 'lucide-react'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupButton } from '@/components/ui/input-group'
 import { Button } from '@/components/ui/button'
 import { useUserStore } from '../stores/userStore'
+import { updateUser } from 'ab-testing-library'
+import { Checkbox } from './ui/checkbox'
+import { Label } from './ui/label'
+import { CheckedState } from '@radix-ui/react-checkbox'
 
 const UserWidget = () => {
   const { userId: storedUserId, userEmail: storedUserEmail, setUserInfo } = useUserStore()
   const [userId, setUserId] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
   const [emailError, setEmailError] = useState<string>('')
-
+  const [reassignVariant, setReassignVariant] = useState<boolean>(false)
   const { initializeUser } = useExperimentContext()
+  const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
-  const isInitialized = Boolean(storedUserId && storedUserEmail)
+  useEffect(() => {
+    if (storedUserId && storedUserEmail) {
+      setIsInitialized(true)
+    }
+  }, [storedUserId, storedUserEmail])
 
   useEffect(() => {
     if (storedUserId && storedUserEmail) {
@@ -55,7 +64,12 @@ const UserWidget = () => {
       return
     }
 
-    // Use stored userId if user is already initialized, otherwise use local state
+    if (isInitialized) {
+      console.log('update user', { storedUserId, userEmail, reassignVariant })
+      await updateUser({ id: storedUserId, email: userEmail }, { reassignVariant: reassignVariant })
+      setUserInfo(storedUserId, userEmail)
+      return
+    }
     const userIdToUse = isInitialized ? storedUserId : userId
 
     if (!userIdToUse) {
@@ -65,6 +79,29 @@ const UserWidget = () => {
     setEmailError('')
     await initializeUser(userIdToUse, userEmail)
     setUserInfo(userIdToUse, userEmail)
+  }
+
+  const handleReassignVariantChange = (checked: CheckedState): void => {
+    console.log(checked)
+    if (checked === 'indeterminate') return
+    setReassignVariant(checked)
+  }
+
+  function handleClearAll(): void {
+    if (window !== undefined) {
+      window.localStorage.removeItem('user-info-storage')
+      window.localStorage.removeItem('ab_user')
+      window.localStorage.removeItem('ab_user_timestamp')
+      window.localStorage.removeItem('ab_sync_queue')
+      window.localStorage.removeItem('ab_variants')
+      window.localStorage.removeItem('ab_variants_timestamp')
+      setIsInitialized(false)
+      setUserInfo('', '')
+      setUserId('')
+      setUserEmail('')
+      setReassignVariant(false)
+    }
+    throw new Error('Function not implemented.')
   }
 
   return (
@@ -113,9 +150,22 @@ const UserWidget = () => {
         {emailError && <p className='text-sm text-destructive'>{emailError}</p>}
       </div>
 
+      {isInitialized && (
+        <div className='flex items-center gap-3'>
+          <Checkbox id='terms' onCheckedChange={handleReassignVariantChange} />
+          <Label htmlFor='terms'>Reassign Variant</Label>
+        </div>
+      )}
+
       <Button type='submit' className='w-full'>
         {isInitialized ? 'Update Email' : 'Initialize User'}
       </Button>
+
+      {isInitialized && (
+        <Button variant='outline' className='w-full' onClick={handleClearAll}>
+          Clear all
+        </Button>
+      )}
     </form>
   )
 }

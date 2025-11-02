@@ -17,6 +17,12 @@ A lightweight, production-ready library for managing A/B tests with deterministi
 npm install ab-testing-library @supabase/supabase-js
 ```
 
+for local installation
+
+```bash
+npm install {path_to_deirectiry}/ab-test-library/packages/ab-testing-library
+```
+
 ## Setup
 
 ### 1. Database Schema
