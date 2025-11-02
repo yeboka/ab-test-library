@@ -83,15 +83,8 @@ export const userService = {
       throw new UserIdMismatchError(currentUser.id, user.id)
     }
     try {
-      let remoteUser = await remoteStorage.getUser(user.id)
-      if (!remoteUser) {
-        await remoteStorage.saveUser(user)
-      } else {
-        user = remoteUser as { id: string; email: string }
-      }
       try {
         window.localStorage.setItem('ab_user', JSON.stringify(user))
-        window.localStorage.removeItem('ab_variants')
       } catch (storageError: any) {
         handleStorageError(storageError, 'ab_user')
       }
