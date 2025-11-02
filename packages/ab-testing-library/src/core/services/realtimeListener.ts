@@ -2,9 +2,8 @@ import { getRemoteStorageAdapter } from '../adapters/remoteStorageAdapter'
 import { variantAssigner } from '../variant-assigner/variantAssigner'
 import { userService } from './userService'
 import { variantService } from './variantService'
-import { RealtimeConnectionError, isQuotaExceededError } from '../errors'
-
-const isBrowser = typeof window !== 'undefined'
+import { RealtimeConnectionError, StorageUnavailableError } from '../errors'
+import { storageManager } from '../storage/storageManager'
 
 export function subscribeToExperimentUpdates() {
   try {
@@ -35,13 +34,12 @@ export function subscribeToExperimentUpdates() {
             }
           }
         }
-        if (isBrowser) {
-          try {
-            window.localStorage.setItem('ab_variants', JSON.stringify(variants))
-          } catch (storageError: any) {
-            if (!isQuotaExceededError(storageError)) {
-              throw storageError
-            }
+        try {
+          storageManager.setItem('ab_variants', variants)
+        } catch (storageError) {
+          // StorageManager handles quota exceeded - only log non-quota errors
+          if (!(storageError instanceof StorageUnavailableError)) {
+            throw storageError
           }
         }
       } catch (err) {

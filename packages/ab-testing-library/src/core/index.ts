@@ -1,8 +1,12 @@
 import { GetVariantProps, InitializeUserProps, UpdateUserProps } from './types'
 import { variantAssigner } from './variant-assigner/variantAssigner'
-import { InitializationError, StorageCorruptionError, isQuotaExceededError } from './errors'
-
-const isBrowser = typeof window !== 'undefined'
+import {
+  InitializationError,
+  StorageCorruptionError,
+  StorageQuotaExceededError,
+  StorageUnavailableError
+} from './errors'
+import { storageManager } from './storage/storageManager'
 
 export const initUserExperimentsAndVariants = async ({
   userData,
@@ -31,13 +35,12 @@ export const initUserExperimentsAndVariants = async ({
       }
     }
   }
-  if (isBrowser) {
-    try {
-      window.localStorage.setItem('ab_variants', JSON.stringify(variants))
-    } catch (storageError: any) {
-      if (!isQuotaExceededError(storageError)) {
-        throw new StorageCorruptionError('ab_variants')
-      }
+  try {
+    storageManager.setItem('ab_variants', variants)
+  } catch (storageError) {
+    // StorageManager handles quota exceeded - only throw non-quota errors
+    if (!(storageError instanceof StorageQuotaExceededError)) {
+      throw storageError
     }
   }
 }
@@ -55,20 +58,23 @@ export const updateUserWithReassignVariants = async ({
     const experiments = await experimentService.getExperiments()
     if (!experiments || experiments.length === 0) return
 
-    if (isBrowser) {
-      window.localStorage.removeItem('ab_variants')
+    try {
+      storageManager.removeItem('ab_variants')
+    } catch (storageError) {
+      // Non-critical - continue even if removal fails
     }
     for (const exp of experiments) {
       const newVariant = variantAssigner.assign(userData, exp.key, exp.splits)
       await variantService.saveUserVariantForExperiment(userData.id, exp.key, newVariant)
     }
     const newVariants = await variantService.getVariantsByUserId(userData.id)
-    if (isBrowser && newVariants) {
+    if (newVariants) {
       try {
-        window.localStorage.setItem('ab_variants', JSON.stringify(newVariants))
-      } catch (storageError: any) {
-        if (!isQuotaExceededError(storageError)) {
-          throw new StorageCorruptionError('ab_variants')
+        storageManager.setItem('ab_variants', newVariants)
+      } catch (storageError) {
+        // StorageManager handles quota exceeded - only throw non-quota errors
+        if (!(storageError instanceof StorageQuotaExceededError)) {
+          throw storageError
         }
       }
     }
